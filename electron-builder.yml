@@ -1,0 +1,9 @@
+appId: com.agentgraph.drawio
+productName: AgentGraph DrawIO
+directories:
+  output: dist
+files:
+  - out/**/*
+  - package.json
+win:
+  target: nsis
