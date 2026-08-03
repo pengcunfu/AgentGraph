@@ -86,11 +86,11 @@ export default function App() {
       </header>
 
       <main className="app-main">
-        <section className="pane chat-pane">
-          <ChatPanel settings={chatSettings} onDiagram={onDiagram} drawioRef={drawioRef} />
-        </section>
         <section className="pane drawio-pane">
           <DrawioPanel ref={drawioRef} theme={settings.theme} />
+        </section>
+        <section className="pane chat-pane">
+          <ChatPanel settings={chatSettings} onDiagram={onDiagram} drawioRef={drawioRef} />
         </section>
       </main>
 

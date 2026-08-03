@@ -96,7 +96,7 @@ body,
 .app-main {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(320px, 420px) 1fr;
+  grid-template-columns: 1fr minmax(320px, 420px);
   min-height: 0;
 }
 
@@ -109,7 +109,7 @@ body,
   display: flex;
   flex-direction: column;
   height: 100%;
-  border-right: 1px solid var(--border);
+  border-left: 1px solid var(--border);
   background: var(--surface);
 }
 
