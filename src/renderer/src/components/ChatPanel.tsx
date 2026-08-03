@@ -3,19 +3,40 @@ import type { ChatMessage, ChatSettings } from '../lib/openai-client'
 import { streamChat } from '../lib/openai-client'
 import { extractDiagramFromText } from '../lib/drawio-parser'
 import type { ParsedDiagram } from '../lib/drawio-parser'
+import type { DrawioStatus } from './DrawioPanel'
 
 interface ChatPanelProps {
   settings: ChatSettings
   onDiagram: (diagram: ParsedDiagram) => void
-  drawioRef: React.RefObject<{ exportXml: () => Promise<string | null> } | null>
+  drawioRef: React.RefObject<{
+    exportXml: () => Promise<string | null>
+    copyToClipboard: () => Promise<boolean>
+    reload: () => void
+  } | null>
+  theme: 'dark' | 'light'
+  onToggleTheme: () => void
+  onOpenSettings: () => void
+  editorStatus: DrawioStatus
+  editorMessage?: string
+  notice?: string
 }
 
-export function ChatPanel({ settings, onDiagram, drawioRef }: ChatPanelProps) {
+export function ChatPanel({
+  settings,
+  onDiagram,
+  drawioRef,
+  theme,
+  onToggleTheme,
+  onOpenSettings,
+  editorStatus,
+  editorMessage,
+  notice
+}: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
       content:
-        '你好！描述你想要的图表（流程图、架构图、ER 图等），我会用 draw.io 格式生成并自动加载到右侧编辑器。'
+        '你好！描述你想要的图表（流程图、架构图、ER 图等），我会用 draw.io 格式生成并自动加载到左侧编辑器。'
     }
   ])
   const [input, setInput] = useState('')
@@ -103,14 +124,64 @@ export function ChatPanel({ settings, onDiagram, drawioRef }: ChatPanelProps) {
     ])
   }
 
+  const editorLabel =
+    editorStatus === 'error'
+      ? '加载异常'
+      : editorStatus === 'ready'
+        ? '编辑器已就绪'
+        : '正在连接 draw.io…'
+
   return (
     <div className="chat-panel">
       <div className="chat-header">
-        <h1>AI 绘图助手</h1>
-        <button type="button" className="btn ghost sm" onClick={clearChat} disabled={loading}>
-          清空
-        </button>
+        <div className="brand">
+          <span className="logo">◇</span>
+          <div className="brand-text">
+            <span className="brand-title">AgentGraph DrawIO</span>
+            <span className="brand-sub">AI 绘图助手</span>
+          </div>
+        </div>
+        <div className="header-actions">
+          <button
+            type="button"
+            className="btn ghost sm theme-toggle"
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'}
+          >
+            {theme === 'dark' ? '浅色' : '深色'}
+          </button>
+          <button type="button" className="btn ghost sm" onClick={onOpenSettings}>
+            设置
+          </button>
+        </div>
       </div>
+
+      <div className="chat-toolbar">
+        <span className={`badge${editorStatus === 'error' ? ' error' : ''}`}>{editorLabel}</span>
+        <div className="toolbar-actions">
+          {editorStatus === 'error' && (
+            <button type="button" className="btn ghost sm" onClick={() => drawioRef.current?.reload()}>
+              重试
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn ghost sm"
+            disabled={editorStatus !== 'ready'}
+            onClick={() => void drawioRef.current?.copyToClipboard()}
+          >
+            导出到剪贴板
+          </button>
+          <button type="button" className="btn ghost sm" onClick={clearChat} disabled={loading}>
+            清空
+          </button>
+        </div>
+      </div>
+
+      {notice && <div className="chat-notice">{notice}</div>}
+      {editorStatus === 'error' && editorMessage && (
+        <div className="chat-notice error">{editorMessage}</div>
+      )}
 
       <div className="chat-messages">
         {messages.map((m, i) => (

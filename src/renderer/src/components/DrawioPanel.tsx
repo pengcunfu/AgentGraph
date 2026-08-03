@@ -16,28 +16,37 @@ const DRAWIO_ORIGINS = new Set([
   'https://www.diagrams.net'
 ])
 
+export type DrawioStatus = 'loading' | 'ready' | 'error'
+
 export interface DrawioPanelHandle {
   loadDiagram: (diagram: ParsedDiagram) => void
   exportXml: () => Promise<string | null>
+  copyToClipboard: () => Promise<boolean>
+  reload: () => void
 }
 
 interface DrawioPanelProps {
   theme?: 'dark' | 'light'
+  onStatusChange?: (status: DrawioStatus, message?: string) => void
   onReady?: () => void
 }
 
 export const DrawioPanel = forwardRef(function DrawioPanel(
-  { theme = 'dark', onReady }: DrawioPanelProps,
+  { theme = 'dark', onStatusChange, onReady }: DrawioPanelProps,
   ref: ForwardedRef<DrawioPanelHandle>
 ) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const readyRef = useRef(false)
-  const [ready, setReady] = useState(false)
-  const [loadError, setLoadError] = useState('')
   const [embedUrl, setEmbedUrl] = useState(() => getDrawioEmbedUrl(theme))
   const pendingRef = useRef<ParsedDiagram | null>(null)
   const exportResolveRef = useRef<((xml: string | null) => void) | null>(null)
   const themeRef = useRef(theme)
+  const onStatusChangeRef = useRef(onStatusChange)
+  onStatusChangeRef.current = onStatusChange
+
+  const reportStatus = useCallback((status: DrawioStatus, message?: string) => {
+    onStatusChangeRef.current?.(status, message)
+  }, [])
 
   const post = useCallback((payload: Record<string, unknown>) => {
     iframeRef.current?.contentWindow?.postMessage(JSON.stringify(payload), '*')
@@ -81,16 +90,17 @@ export const DrawioPanel = forwardRef(function DrawioPanel(
     [post]
   )
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = useCallback(async () => {
     const xml = await exportXml()
-    if (xml) await navigator.clipboard.writeText(xml)
-  }
+    if (!xml) return false
+    await navigator.clipboard.writeText(xml)
+    return true
+  }, [exportXml])
 
   const reloadEditor = useCallback(
     (nextTheme = theme, preserveXml?: string | null) => {
       readyRef.current = false
-      setReady(false)
-      setLoadError('')
+      reportStatus('loading')
       if (preserveXml?.includes('<mxGraphModel')) {
         pendingRef.current = { type: 'drawio', content: preserveXml }
       } else {
@@ -102,13 +112,19 @@ export const DrawioPanel = forwardRef(function DrawioPanel(
         iframeRef.current.src = url
       }
     },
-    [theme]
+    [theme, reportStatus]
   )
 
   useImperativeHandle(ref, () => ({
     loadDiagram,
-    exportXml
+    exportXml,
+    copyToClipboard,
+    reload: () => reloadEditor()
   }))
+
+  useEffect(() => {
+    reportStatus('loading')
+  }, [reportStatus])
 
   useEffect(() => {
     if (themeRef.current === theme) return
@@ -129,7 +145,7 @@ export const DrawioPanel = forwardRef(function DrawioPanel(
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       if (!readyRef.current) {
-        setLoadError('draw.io 加载超时，请检查网络后点击重试')
+        reportStatus('error', 'draw.io 加载超时，请检查网络后点击重试')
       }
     }, 45000)
 
@@ -148,11 +164,9 @@ export const DrawioPanel = forwardRef(function DrawioPanel(
 
       if (msg.event === 'init') {
         readyRef.current = true
-        setReady(true)
-        setLoadError('')
+        reportStatus('ready')
         onReady?.()
 
-        // spin=1 时必须先 load 才会结束「加载中」；无待加载图则打开空白画布
         const pending = pendingRef.current
         pendingRef.current = null
         if (pending) {
@@ -173,31 +187,10 @@ export const DrawioPanel = forwardRef(function DrawioPanel(
       window.clearTimeout(timeout)
       window.removeEventListener('message', onMessage)
     }
-  }, [onReady, applyLoad, post])
+  }, [onReady, applyLoad, post, reportStatus])
 
   return (
     <div className="drawio-panel">
-      <div className="panel-toolbar">
-        <span className="badge">
-          {loadError ? '加载异常' : ready ? '编辑器已就绪' : '正在连接 draw.io…'}
-        </span>
-        <div className="toolbar-actions">
-          {loadError && (
-            <button type="button" className="btn ghost" onClick={() => reloadEditor()}>
-              重试
-            </button>
-          )}
-          <button
-            type="button"
-            className="btn ghost"
-            disabled={!ready}
-            onClick={() => void copyToClipboard()}
-          >
-            导出到剪贴板
-          </button>
-        </div>
-      </div>
-      {loadError && <div className="drawio-error">{loadError}</div>}
       <iframe
         ref={iframeRef}
         className="drawio-frame"
