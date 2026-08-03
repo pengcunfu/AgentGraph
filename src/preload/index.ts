@@ -1,9 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+export type AppTheme = 'dark' | 'light'
+
 export interface AppSettings {
   apiKey: string
   baseURL: string
   model: string
+  theme: AppTheme
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {

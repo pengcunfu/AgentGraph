@@ -2,16 +2,20 @@ import { app } from 'electron'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 
+export type AppTheme = 'dark' | 'light'
+
 export interface AppSettings {
   apiKey: string
   baseURL: string
   model: string
+  theme: AppTheme
 }
 
 const defaults: AppSettings = {
   apiKey: '',
   baseURL: 'https://api.openai.com/v1',
-  model: 'gpt-4o-mini'
+  model: 'gpt-4o-mini',
+  theme: 'dark'
 }
 
 function settingsPath(): string {

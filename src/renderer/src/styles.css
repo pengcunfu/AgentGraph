@@ -1,4 +1,5 @@
-:root {
+:root,
+[data-theme='dark'] {
   --bg: #0f1117;
   --surface: #171a22;
   --surface-2: #1e2330;
@@ -10,7 +11,34 @@
   --danger: #e85d5d;
   --user-bubble: #243049;
   --assistant-bubble: #1a1f2b;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  --success: #6dd4a0;
+  --drawio-panel-bg: #1a1f2b;
+  --drawio-toolbar-bg: #171a22;
+  --drawio-toolbar-text: #e8ecf4;
+  --drawio-toolbar-border: #2a3142;
+  --modal-backdrop: rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --surface-2: #f3f5f9;
+  --border: #d5dbe8;
+  --text: #1a1f2b;
+  --muted: #5c6578;
+  --accent: #3b6fd9;
+  --accent-hover: #2f5fc4;
+  --danger: #d94545;
+  --user-bubble: #e8eef8;
+  --assistant-bubble: #f0f2f5;
+  --success: #1f9d63;
+  --drawio-panel-bg: #ffffff;
+  --drawio-toolbar-bg: #f5f6f8;
+  --drawio-toolbar-text: #333333;
+  --drawio-toolbar-border: #dddddd;
+  --modal-backdrop: rgba(15, 17, 23, 0.4);
+  color-scheme: light;
 }
 
 * {
@@ -24,6 +52,7 @@ body,
   height: 100%;
   background: var(--bg);
   color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 .app {
@@ -61,7 +90,7 @@ body,
 
 .status {
   font-size: 0.85rem;
-  color: #6dd4a0;
+  color: var(--success);
 }
 
 .app-main {
@@ -181,7 +210,7 @@ body,
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--drawio-panel-bg);
 }
 
 .panel-toolbar {
@@ -189,14 +218,28 @@ body,
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: #f5f6f8;
-  border-bottom: 1px solid #ddd;
-  color: #333;
+  background: var(--drawio-toolbar-bg);
+  border-bottom: 1px solid var(--drawio-toolbar-border);
+  color: var(--drawio-toolbar-text);
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .badge {
   font-size: 0.8rem;
-  color: #555;
+  color: var(--muted);
+}
+
+.drawio-error {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--danger);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
 }
 
 .drawio-frame {
@@ -235,8 +278,8 @@ body,
 }
 
 .panel-toolbar .btn.ghost {
-  color: #333;
-  border-color: #ccc;
+  color: var(--drawio-toolbar-text);
+  border-color: var(--drawio-toolbar-border);
 }
 
 .btn.danger {
@@ -249,10 +292,41 @@ body,
   cursor: not-allowed;
 }
 
+.theme-toggle {
+  min-width: 72px;
+}
+
+.theme-options {
+  display: flex;
+  gap: 8px;
+}
+
+.theme-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.theme-option.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  color: var(--text);
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--modal-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;

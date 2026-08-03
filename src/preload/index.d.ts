@@ -1,4 +1,6 @@
-import type { AppSettings } from './index'
+import type { AppSettings, AppTheme } from './index'
+
+export type { AppSettings, AppTheme }
 
 declare global {
   interface Window {
